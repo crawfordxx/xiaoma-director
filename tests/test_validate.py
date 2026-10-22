@@ -65,6 +65,12 @@ def test_speech_too_long_for_shot(sb):
     assert any(e.startswith('第 1 镜 台词和旁白共 17 字') for e in errs(sb))
 
 
+def test_english_words_counted_by_syllable(sb):
+    # 镜长 2s、上限 10 字：「上TikTok还是Amazon」= 3 汉字 + 2 + 3 音节 = 8，按字母算是 15
+    sb['shots'][0]['vo'] = '上TikTok还是Amazon'
+    assert not any('说不完' in e for e in errs(sb))
+
+
 def test_speaker_names_not_counted_as_speech(sb):
     # 2.2 秒上限 11 字；连名字算是 12 字，去掉说话人名字是 7 字
     sb['shots'][0]['dialogue'] = '陆律师：林小姐请签字\n林夏：好'
@@ -194,6 +200,15 @@ def test_tempo_must_be_known(sb):
 def test_project_asl_must_be_pair(sb):
     sb['project']['asl'] = [3, 2]
     assert 'project.asl 必须是 [下限, 上限] 两个数字且下限小于上限' in errs(sb)
+
+
+def test_project_hook_must_be_non_negative_number(sb):
+    for hook in (-1, '3', True, float('nan')):
+        sb['project']['hook'] = hook
+        assert 'project.hook 必须是不小于 0 的数字（秒，0 表示不查）' in errs(sb), hook
+    for hook in (0, 3, 9.5):
+        sb['project']['hook'] = hook
+        assert errs(sb) == [], hook
 
 
 def test_review_fields_checked(sb):

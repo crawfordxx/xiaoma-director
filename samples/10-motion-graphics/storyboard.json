@@ -18,10 +18,6 @@
     "extra_columns": [
       "图形元素",
       "数据"
-    ],
-    "asl": [
-      4,
-      6
     ]
   },
   "strategy": {

@@ -9,7 +9,7 @@ import re
 import sys
 from pathlib import Path
 
-from sbcommon import ASPECT_SIZES, SHOT_SIZES, TEMPOS, blank, genre_ids, is_num, load_storyboard
+from sbcommon import ASPECT_SIZES, SHOT_SIZES, TEMPOS, blank, genre_ids, is_num, load_storyboard, spoken_units
 
 PROJECT_REQUIRED = ['title', 'genre', 'duration_s', 'aspect']
 SHOT_REQUIRED = ['no', 'duration_s', 'shot_size', 'angle', 'movement', 'visual',
@@ -112,6 +112,8 @@ def _check_types(sb):
         errors.append('project.extra_columns 必须是字符串列表')
     if _bad_asl(project.get('asl')):
         errors.append('project.asl 必须是 [下限, 上限] 两个数字且下限小于上限')
+    if 'hook' in project and not (is_num(project['hook']) and project['hook'] >= 0):
+        errors.append('project.hook 必须是不小于 0 的数字（秒，0 表示不查）')
     if sb.get('review') is not None:
         errors += _check_review_types(sb['review'])
     beats = (sb.get('strategy') or {}).get('beats')
@@ -124,10 +126,9 @@ def _check_types(sb):
 
 
 def _speech_chars(shot):
-    """台词和旁白里要念出来的字数（汉字、字母、数字，不算标点和「林夏：」这类说话人前缀）。"""
+    """台词和旁白里要念出来的字数（汉字、数字按个，英文按音节，不算标点和「林夏：」这类说话人前缀）。"""
     dialogue = SPEAKER.sub(r'\1', shot.get('dialogue') or '')
-    text = dialogue + (shot.get('vo') or '')
-    return sum(1 for ch in text if ch.isalnum())
+    return spoken_units(dialogue + (shot.get('vo') or ''))
 
 
 def _check_project(project, genres):

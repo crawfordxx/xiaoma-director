@@ -17,10 +17,6 @@
     ],
     "extra_columns": [
       "表演提示"
-    ],
-    "asl": [
-      4,
-      6
     ]
   },
   "strategy": {

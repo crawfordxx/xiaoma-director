@@ -71,6 +71,24 @@ def blank(v):
     return v is None or (isinstance(v, str) and not v.strip())
 
 
+LATIN_WORD = re.compile(r'[A-Za-z]+')
+VOWEL_GROUP = re.compile(r'[aeiouy]+', re.IGNORECASE)
+ACRONYM_MAX = 5              # 不超过这么长的全大写词按字母念（AI、TVC）
+
+
+def _syllables(word):
+    if word.isupper() and len(word) <= ACRONYM_MAX:
+        return len(word)
+    return max(1, len(VOWEL_GROUP.findall(word)))
+
+
+def spoken_units(text):
+    """念出来大约几个音节：汉字、数字按个算，英文单词按音节估；按字母算会把 TikTok 当成 6 个字。"""
+    words = LATIN_WORD.findall(text)
+    rest = LATIN_WORD.sub('', text)
+    return sum(1 for ch in rest if ch.isalnum()) + sum(_syllables(w) for w in words)
+
+
 def is_num(v):
     return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
 

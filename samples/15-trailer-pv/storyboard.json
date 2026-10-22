@@ -17,10 +17,6 @@
     ],
     "extra_columns": [
       "信息释放"
-    ],
-    "asl": [
-      2,
-      3
     ]
   },
   "strategy": {

@@ -17,10 +17,6 @@
     ],
     "extra_columns": [
       "情绪钩子"
-    ],
-    "asl": [
-      2.5,
-      3
     ]
   },
   "strategy": {

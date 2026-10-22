@@ -26,6 +26,11 @@ def test_speech_need_adds_gap_when_speaker_changes():
     assert speech_need(shot(dialogue='甲：好。\n乙：走。'), 4) == pytest.approx(0.8)
 
 
+def test_speech_need_counts_english_by_syllable():
+    # 「做」1 + TikTok 2 + Shop 1 + AI 按字母 2 = 6 音节 ÷ 4 = 1.5
+    assert speech_need(shot(vo='做TikTok Shop，AI'), 4) == pytest.approx(1.5)
+
+
 def test_speech_need_zero_without_speech():
     assert speech_need(shot(), 4) == 0
 
@@ -109,6 +114,19 @@ def test_overall_too_slow(genres):
 def test_project_asl_overrides_genre(genres):
     a = analyze(_sb([3.5, 3.4, 3.3, 3.2], asl=[3, 4]), genres)
     assert a['asl'] == (3, 4) and not any('整体' in n for n in a['notes'])
+
+
+def test_late_hook_flagged(genres):
+    assert any('钩子' in n for n in analyze(_sb([2.5, 2, 2, 2.4]), genres)['notes']) is False
+    assert any('钩子' in n for n in analyze(_sb([5, 2, 2, 2.4]), genres)['notes'])
+
+
+def test_project_hook_overrides_genre(genres):
+    # 长版放宽、竖屏短版收紧；0 表示不查
+    assert not any('钩子' in n for n in analyze(_sb([5, 2, 2, 2.4], hook=6), genres)['notes'])
+    assert any('2s 内' in n for n in analyze(_sb([2.5, 2, 2, 2.4], hook=2), genres)['notes'])
+    a = analyze(_sb([9, 2, 2, 2.4], hook=0), genres)
+    assert a['profile']['hook'] == 0 and not any('钩子' in n for n in a['notes'])
 
 
 def test_uniform_rhythm_flagged(genres):

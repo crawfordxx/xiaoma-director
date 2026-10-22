@@ -11,7 +11,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from sbcommon import GENRES_DIR, blank, genre_name, is_num, load_storyboard, pace_profile
+from sbcommon import GENRES_DIR, blank, genre_name, is_num, load_storyboard, pace_profile, spoken_units
 from validate import SPEAKER, check
 
 # 看清画面的最短时长（秒），景别越远信息越多
@@ -39,7 +39,7 @@ def speech_need(shot, cps):
     dialogue = shot.get('dialogue') or ''
     speakers = len(SPEAKER.findall(dialogue))
     text = SPEAKER.sub(r'\1', dialogue) + (shot.get('vo') or '')
-    n = _chars(text)
+    n = spoken_units(text)
     if n == 0:
         return 0.0
     return n / cps + max(speakers - 1, 0) * SPEAKER_GAP
@@ -137,6 +137,8 @@ def analyze(sb, genres_dir=None):
     """整份分镜的节奏机检；sb 须已通过 validate.check。"""
     project = sb['project']
     prof = pace_profile(project['genre'], genres_dir or GENRES_DIR)
+    if 'hook' in project:   # 子类型（长版、竖屏短版）的钩子时限；0 表示不查
+        prof = {**prof, 'hook': float(project['hook'])}
     asl = tuple(project['asl']) if project.get('asl') else prof['asl']
     shots = [analyze_shot(s, prof) for s in sb['shots']]
     durations = [s['duration'] for s in shots]

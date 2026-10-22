@@ -9,6 +9,7 @@
 ## 能做什么
 
 - **17 个片种**：TVC 广告、品牌宣传片、竖屏短剧、教程、产品宣传片、文旅宣传片、微电影、动画短片、知识科普、MG 动画、达人口播带货、纪录片、MV、Vlog、预告片 / 游戏 PV、片头开场片、活动纪实。每个片种一张「片种卡」，写清结构模板、节奏基准、招牌镜头、扩展列、画风、声音要点和常见坑
+- **向顶尖作品学**：每张片种卡都按国内外公认的好片子拉片实测校过，卡末列出 4–6 部「顶尖范本」和它们怎么排镜头，写分镜时先挑一部最接近的照着排，见下文
 - **先定片种**：需求说清了就直接匹配并说明理由；说不清就分两层问（先问大类，再问具体片种），还定不下来就问三个问题收敛，不硬猜
 - **专业分镜表**：镜号、时间码、景别 · 角度 · 运镜、画面内容、台词 / 旁白 / 字幕、音效 / 音乐、转场、叙事目的，加上片种自己的扩展列（比如 TVC 的「产品露出」、短剧的「情绪钩子」、MV 的「歌词」和「卡点」）。时间码由脚本按每镜时长算出，不会断档
 - **导演审核**：出图之前先审节奏，见下文
@@ -21,10 +22,24 @@
 
 两层：
 
-1. **节奏机检**（`review.py`）：每镜先算「所需下限」，取四项里最长的：看清画面（按景别，大远景 3 秒到大特写 0.8 秒）、念完台词（字数 ÷ 片种舒适语速）、读完字幕（每秒 9 字）、动作做完（编导估算的 `action_s`）。实际时长短于下限判**偏紧**，长于「下限 + 片种余量」判**拖沓**；另外提醒全片整体偏快偏慢、节奏匀速、钩子太晚。有意为之的写 `pace_note` 说明理由
+1. **节奏机检**（`review.py`）：每镜先算「所需下限」，取四项里最长的：看清画面（按景别，大远景 3 秒到大特写 0.8 秒）、念完台词（字数 ÷ 片种舒适语速，英文单词按音节算）、读完字幕（每秒 9 字）、动作做完（编导估算的 `action_s`）。实际时长短于下限判**偏紧**，长于「下限 + 片种余量」判**拖沓**；另外提醒全片整体偏快偏慢、节奏匀速、钩子太晚。有意为之的写 `pace_note` 说明理由
 2. **导演审片**：由一个没参与创作的审片人（独立子代理）按 [`director-review.md`](skills/xiaoma-director/references/director-review.md) 逐镜判断规则抓不到的问题：刺激性台词后有没有反应镜头、动作做没做完就切走、有没有重复信息、情绪顶点后有没有降温、有没有快慢变化。每条意见写清镜号、症状、证据、改法和严重度，结论分「通过 / 有备注通过 / 退回修改」，最多改 3 轮
 
+每个片种的节奏参数（平均镜长区间、语速、余量、无台词镜停留上限、钩子时限）都用顶尖范本校过：取值让好片子被机检误判的镜头不超过一成。片子属于卡里的子类型（竖屏短版、一镜到底、长版）时，用 `project.asl`、`project.hook` 覆盖片种值。
+
 审核放在出图之前：改秒数、改台词不用重出图，只有拆镜、并镜、改画面才要补图。审核标准参考了 Walter Murch 的剪辑六原则、镜头时长与景别的统计研究、Netflix 中文字幕规范、多个开源分镜 skill 的审核规则，以及 B 站和抖音上剪辑博主的教程，出处见 [`director-review.md`](skills/xiaoma-director/references/director-review.md) 末尾。
+
+## 向顶尖作品学：拉片实测
+
+每个片种挑 4–7 部国内外公认的好片子当范本，依据是大奖（戛纳狮、One Show、D&AD、奥斯卡、金马等）、行业公认的导演和工作室、平台头部播放、被反复拉片教学。比如 TVC 看 Ridley Scott《1984》、Iñárritu《Write the Future》，纪录片看 BBC《地球脉动 II》、陈晓卿《舌尖上的中国》，片头看 Saul Bass、Kyle Cooper《七宗罪》、Patrick Clair《真探》，科普看 Kurzgesagt、3Blue1Brown、何同学，MV 看 Hiro Murai《This Is America》、Dave Meyers《HUMBLE.》。
+
+- **读教程**：B 站、抖音、小红书、知乎、YouTube、TikTok、Reddit 上的拉片、分镜拆解、导演幕后，加上 Art of the Title、StudioBinder、No Film School、获奖案例页和导演访谈
+- **实测**：范本下载到本机，用 PySceneDetect 切镜、抽帧人工复核，量平均镜长、镜长分布、前 3 秒切几刀、钩子在第几秒；语速用字幕时间轴或本机 Whisper 转写来量。量完即删视频，只留数字
+- **落到卡片**：多源一致或有实测的结论才改进片种卡，单一来源的写成「也可以」；每张卡末尾加「顶尖范本」表，写每部片子怎么排镜头
+
+几个和直觉不一样的发现：头部文旅片哪怕主题是「慢」，平均镜长也只有 1.3–2 秒，慢感靠画面里的慢而不是拉长镜头；国内平台头部纪录片正片平均镜长 2.5–2.8 秒，比国外观察型（4–9 秒）快一倍；顶尖 MV 和 aftermovie 的切点并不逐拍卡，节拍感靠画内动作；预告片三幕镜长依次约 1.6–2.3 → 1.2–2.1 → 0.9–1.5 秒。
+
+全部实测数据、参数取值依据和 250 条来源见 [`references/benchmarks.md`](skills/xiaoma-director/references/benchmarks.md)。
 
 ## 安装
 
@@ -120,7 +135,7 @@ python3 $SD/render.py   storyboard.json            # 生成同目录的 storyboa
 
 ### 02 · 品牌形象宣传片：青禾新能源 ·《一度电能走多远》
 
-90s · 16:9 · 22 镜 · 节选 · 导演审核：有备注通过（15 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/02-brand-film/storyboard.html)
+90s · 16:9 · 39 镜 · 节选 · 导演审核：有备注通过（8 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/02-brand-film/storyboard.html)
 
 > 一个电池工程师在零下三十多度的雪原上记了十一年数字，只为回答一个问题：一度电，能走多远。
 
@@ -136,7 +151,7 @@ python3 $SD/render.py   storyboard.json            # 生成同目录的 storyboa
 
 ### 04 · 教程 / 操作演示：《5 分钟学会数据透视表》
 
-90s · 16:9 · 14 镜 · 节选 · 导演审核：有备注通过（13 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/04-tutorial/storyboard.html)
+90s · 16:9 · 14 镜 · 节选 · 导演审核：有备注通过（19 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/04-tutorial/storyboard.html)
 
 > 先让观众看到两百行明细一下变成五行汇总，再手把手走完「点开、拖三次」，在这一段结尾亲手做出和开头一模一样的那张表。
 
@@ -152,7 +167,7 @@ python3 $SD/render.py   storyboard.json            # 生成同目录的 storyboa
 
 ### 06 · 文旅 / 城市宣传片：《沙溪，慢下来的茶马古道》
 
-90s · 16:9 · 20 镜 · 节选 · 导演审核：有备注通过（11 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/06-city-tourism/storyboard.html)
+90s · 16:9 · 46 镜 · 节选 · 导演审核：有备注通过（5 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/06-city-tourism/storyboard.html)
 
 > 一个习惯按分钟过日子的上海人来到沙溪，被马铃、烤茶和一周一次的集市一点点调慢，第三天他把手机扣在了古戏台的石阶上。
 
@@ -176,7 +191,7 @@ python3 $SD/render.py   storyboard.json            # 生成同目录的 storyboa
 
 ### 09 · 知识科普 / 解说：《为什么飞机航线是弯的》
 
-90s · 16:9 · 14 镜 · 节选 · 导演审核：有备注通过（9 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/09-explainer/storyboard.html)
+90s · 16:9 · 28 镜 · 节选 · 导演审核：有备注通过（6 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/09-explainer/storyboard.html)
 
 > 把观众在航线屏幕上见过的那条弯线当成谜题：先让直线和弯线比一比里程，再剥开地球仪看地图是怎么被拉变形的，最后用一根拉紧的线证明——弯的那条，才是最直的路。
 
@@ -208,7 +223,7 @@ python3 $SD/render.py   storyboard.json            # 生成同目录的 storyboa
 
 ### 13 · MV / 音乐短片：《海边的风》MV
 
-60s · 16:9 · 12 镜 · 节选 · 导演审核：有备注通过（2 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/13-mv/storyboard.html)
+60s · 16:9 · 20 镜 · 节选 · 导演审核：有备注通过（7 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/13-mv/storyboard.html)
 
 > 他坐末班车回到海边小镇，院子里还晾着你那件白衬衫；风一直往海的方向吹，像要把没说出口的话送过去。
 
@@ -216,7 +231,7 @@ python3 $SD/render.py   storyboard.json            # 生成同目录的 storyboa
 
 ### 14 · Vlog：《一个人去阿勒泰的第三天》
 
-60s · 16:9 · 12 镜 · 节选 · 导演审核：有备注通过（4 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/14-vlog/storyboard.html)
+60s · 16:9 · 16 镜 · 节选 · 导演审核：有备注通过（9 条意见） · [在线看分镜表](https://crawfordxx.github.io/xiaoma-director/samples/14-vlog/storyboard.html)
 
 > 阿勒泰第三天，房东说今天可能有雾；我七点摸黑出门爬上观景台，等太阳翻过山头，等雾从河谷里升起来。
 
@@ -252,7 +267,7 @@ python3 $SD/render.py   storyboard.json            # 生成同目录的 storyboa
 skills/xiaoma-director/       skill 本体（安装的就是这个目录）
   SKILL.md                    总控流程与片种速查
   genres/                     17 张片种卡
-  references/                 镜头语言、字段说明、出图提示词、导演审片标准、交付自检
+  references/                 镜头语言、字段说明、出图提示词、导演审片标准、交付自检、顶尖范本实测与来源
   scripts/                    validate / review / frames / render 及出图后端
 samples/                      17 个片种样例（storyboard.json、分镜图、HTML）
 tests/                        pytest
@@ -272,6 +287,7 @@ pytest tests -q
 - 开源 skill：[Shanyin-ai/shanyin-director-master](https://github.com/Shanyin-ai/shanyin-director-master)、[zhlmi/script-forging](https://github.com/zhlmi/script-forging)、[anyhui/video-storyboard-gen-skill](https://github.com/anyhui/video-storyboard-gen-skill)、[isjiamu/jiamu-skills](https://github.com/isjiamu/jiamu-skills)、[OYYH-Apple/video-storyboard-generator](https://github.com/OYYH-Apple/video-storyboard-generator)、[zenstory-ai/drama-skills](https://github.com/zenstory-ai/drama-skills)、[eternityspring/shuohao-skills](https://github.com/eternityspring/shuohao-skills)、[tomatoparkdao/omniailab-ai-director](https://github.com/tomatoparkdao/omniailab-ai-director)、[zyz254009-crypto/script-to-shootable-storyboard](https://github.com/zyz254009-crypto/script-to-shootable-storyboard)、[lixiaoxiao9888-create/manju-laoli-skill](https://github.com/lixiaoxiao9888-create/manju-laoli-skill)、[HeyChengC/vibe-knowledge-film](https://github.com/HeyChengC/vibe-knowledge-film)、[feicaiclub/video-spec-builder](https://github.com/feicaiclub/video-spec-builder)、[calesthio/generative-media-skills](https://github.com/calesthio/generative-media-skills)、[62656456/ai-film-skills](https://github.com/62656456/ai-film-skills)、[aicontentskills/ai-video-storyboard-skill](https://github.com/aicontentskills/ai-video-storyboard-skill)、[inference-sh/skills](https://github.com/inference-sh/skills)
 - 剪辑理论：Walter Murch《In the Blink of an Eye》、Karel Reisz《电影剪辑技巧》、Edward Dmytryk 剪辑原则；镜头时长统计（Cutting 等）；Netflix 简体中文字幕规范
 - B 站和抖音的剪辑教程：幕后玩家Stage、Director鹤唳云端、映美、电影裁缝Bryan、壹帧影视冬冬、阿次的寶藏片場、郭爱疯、董肯特等
+- 顶尖范本拉片：各片种范本的导演、创作者和拆解作者，以及 Art of the Title、StudioBinder、No Film School 等资料站，逐条列在 [`benchmarks.md`](skills/xiaoma-director/references/benchmarks.md)。实测只为研究，视频不分发，卡片里只写重新归纳的规则和数字
 
 ## License
 
