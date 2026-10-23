@@ -144,3 +144,43 @@ def test_index_card_shows_review_verdict(sb, tmp_path):
     (tmp_path / '02-y' / 'storyboard.json').write_text(json.dumps(sb, ensure_ascii=False), encoding='utf-8')
     out = render_index(collect(tmp_path))
     assert '审片：有备注通过' in out and '审片：未审片' in out
+
+
+# ---- 视频出片列（7b/7c 产物） ----
+
+def test_no_video_column_when_no_shot_has_video(sb, tmp_path):
+    out = render_storyboard(sb, tmp_path)
+    assert '<th>出片</th>' not in out
+
+
+def test_video_column_shows_link_and_qa_badge(sb, tmp_path):
+    sb['shots'][0]['video'] = {'prompt': 'p', 'backend': 'task:vid', 'url': 'https://cdn/1.mp4', 'ts': 't',
+                               'qa': {'total': 85.9, 'verdict': 'pass'}}
+    out = render_storyboard(sb, tmp_path)
+    assert '<th>出片</th>' in out
+    assert 'href="https://cdn/1.mp4"' in out
+    assert 'qa-pass' in out and '85.9' in out
+    # 无视频的镜显示占位,不炸
+    assert out.count('data-label="出片"') == 3
+
+
+def test_video_repair_advice_renders_escaped(sb, tmp_path):
+    sb['shots'][1]['video'] = {'prompt': 'p', 'backend': 'dry:chat:', 'url': 'dry-run:p',
+                               'qa': {'total': 62.0, 'verdict': 'repair',
+                                      'advice': '镜头 2 局部修改：<b>主体一致性</b>（拿原片加指令改）'}}
+    out = render_storyboard(sb, tmp_path)
+    assert 'qa-repair' in out
+    assert '&lt;b&gt;主体一致性&lt;/b&gt;' in out
+
+
+def test_dry_run_url_shows_prompt_ready_not_link(sb, tmp_path):
+    sb['shots'][0]['video'] = {'prompt': 'p', 'backend': 'dry:chat:', 'url': 'dry-run:p'}
+    out = render_storyboard(sb, tmp_path)
+    assert '已备提示词' in out
+    assert 'href="dry-run:' not in out
+
+
+def test_video_error_renders(sb, tmp_path):
+    sb['shots'][0]['video'] = {'prompt': 'p', 'backend': 'task:vid', 'error': '内容不合规'}
+    out = render_storyboard(sb, tmp_path)
+    assert '出片失败' in out and '内容不合规' in out

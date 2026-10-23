@@ -121,6 +121,10 @@ table.issues small{color:var(--muted)}
   table.shots td.img{grid-row:auto}
   .frame,.missing{width:100%}
 }
+
+.qa{font-size:12px;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.qa-pass{background:#1d7a46;color:#fff}.qa-repair{background:#9a6b00;color:#fff}.qa-fail{background:#a33;color:#fff}
+.v-dry{color:#888;font-size:12px}.v-err{color:#a33;font-size:12px}.v-advice{color:#b8860b;font-size:11px;margin-top:4px}
 """
 
 JS = """
@@ -209,7 +213,32 @@ def _pace_badge(pace):
             f'{esc(pace["status"])}</span>')
 
 
-def _row(shot, start, end, extra_cols, base_dir, pace=None):
+QA_BADGE = {'pass': ('qa-pass', '✓ 过'), 'repair': ('qa-repair', '↻ 修'), 'fail': ('qa-fail', '✗ 重出')}
+
+
+def _video_cell(shot):
+    """出片格：链接 / 已备提示词 / 失败原因 + 质检徽标与修复建议。没有 video 返回 None。"""
+    video = shot.get('video')
+    if not video:
+        return '—'
+    parts = []
+    url = video.get('url') or ''
+    if video.get('error'):
+        parts.append(f'<span class="v-err">出片失败：{esc(video["error"])}</span>')
+    elif url.startswith('dry-run:'):
+        parts.append('<span class="v-dry">已备提示词</span>')
+    elif url:
+        parts.append(f'<a href="{esc(url)}" target="_blank">▶ 片段</a>')
+    qa = video.get('qa')
+    if qa:
+        cls, label = QA_BADGE.get(qa.get('verdict'), ('', qa.get('verdict', '')))
+        parts.append(f'<span class="qa {cls}">{label} {esc(qa.get("total"))}</span>')
+        if qa.get('advice'):
+            parts.append(f'<div class="v-advice">{esc(qa["advice"])}</div>')
+    return ''.join(parts) or '—'
+
+
+def _row(shot, start, end, extra_cols, base_dir, pace=None, with_video=False):
     no = shot.get('no')
     camera = ''.join(f'<div>{esc(v)}</div>' for v in
                      [shot.get('shot_size'), shot.get('angle'), shot.get('movement'), shot.get('lens')] if v)
@@ -230,6 +259,7 @@ def _row(shot, start, end, extra_cols, base_dir, pace=None):
         ('叙事目的', 'purpose', beat + esc(shot.get('purpose'))),
         *[(c, 'extra', esc(extra.get(c))) for c in extra_cols],
         ('备注', 'notes', esc(shot.get('notes'))),
+        *( [('出片', 'video', _video_cell(shot))] if with_video else [] ),
     ]
     tds = ''.join(f'<td class="{cls}" data-label="{esc(label)}">{body}</td>' for label, cls, body in cells)
     return f'<tr>{tds}</tr>'
@@ -238,10 +268,11 @@ def _row(shot, start, end, extra_cols, base_dir, pace=None):
 def _table(sb, base_dir, paces):
     shots = sb.get('shots') or []
     extra_cols = (sb.get('project') or {}).get('extra_columns') or []
+    with_video = any(s.get('video') for s in shots)
     head = ['镜号', '分镜图', '时间码 / 转场', '景别 · 角度 · 运镜', '画面内容', '声音 / 字幕',
-            '叙事目的', *extra_cols, '备注']
+            '叙事目的', *extra_cols, '备注', *( ['出片'] if with_video else [] )]
     ths = ''.join(f'<th>{esc(h)}</th>' for h in head)
-    rows = ''.join(_row(s, a, b, extra_cols, base_dir, p)
+    rows = ''.join(_row(s, a, b, extra_cols, base_dir, p, with_video)
                    for s, (a, b), p in zip(shots, timecodes(shots), paces))
     return (f'<section><h2>分镜表<small>{len(shots)} 镜</small></h2><div class="scroll"><table class="shots">'
             f'<thead><tr>{ths}</tr></thead><tbody>{rows}</tbody></table></div></section>')
