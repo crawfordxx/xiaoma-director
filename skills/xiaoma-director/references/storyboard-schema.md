@@ -78,6 +78,7 @@
 | `pace_note` | | 机检报偏紧或拖沓、但有意为之时写理由，机检记为「已说明」 |
 | `refs` | | 本镜出现的设定 id 列表，出图时带上这些设定图保持一致 |
 | `frame_prompt` | ✅ | 本镜出图提示词（写法见 `frame-prompts.md`） |
+| `video` | | 本镜视频出片结果（`video_render.py` 写回，不用手写）：`{prompt, backend, url, ts, error?, qa?}`；`backend` 是出片签名，换模型自动重出；`qa` 是七维质检 `{scores, total, verdict, advice}` |
 | `frame` | | 分镜图路径，由 `frames.py` 按镜号生成 `frames/sNN.jpg`，不用手写；增删镜头后自动重算 |
 
 ## review（导演审片结论）

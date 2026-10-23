@@ -14,6 +14,7 @@
 - **专业分镜表**：镜号、时间码、景别 · 角度 · 运镜、画面内容、台词 / 旁白 / 字幕、音效 / 音乐、转场、叙事目的，加上片种自己的扩展列（比如 TVC 的「产品露出」、短剧的「情绪钩子」、MV 的「歌词」和「卡点」）。时间码由脚本按每镜时长算出，不会断档
 - **导演审核**：出图之前先审节奏，见下文
 - **分镜图**：角色、产品、场景先出设定图，后面的镜头带着设定图出图，跨镜保持一致；改了分镜重跑，只重出变了的镜头
+- **视频出片（可选）**：配置视频模型后，分镜逐镜生成视频片段（四种后端：OpenAI 兼容、任务轮询、结构化导演参数、自定义命令），先干跑看提示词再真出片；出片后七维质检，修复优先「局部修改」而不是整镜重出。17 个片种哪些适合生成、哪些该实拍混合，见 [`references/video-pipeline.md`](skills/xiaoma-director/references/video-pipeline.md) 的路线筛选表
 - **单文件 HTML**：分镜图内嵌，宽屏是表格，窄屏自动变卡片，可以直接打印成 A4 横版
 
 ## 导演审核
@@ -101,6 +102,28 @@ export IMAGE_CMD='python3 /path/to/my_mj.py --prompt {prompt} --ar {aspect} --re
 本仓库只实测过 OpenAI 兼容接口；Midjourney 脚本需要按你用的服务自己实现。
 
 **预估费用**：设 `IMAGE_PRICE=每张价格`，`frames.py --dry-run` 会给出预估。
+
+## 配置视频模型
+
+和出图一样全走环境变量，四种后端，默认**干跑**（只产出每镜提示词，不联网不花钱）：
+
+```bash
+# 后端一：OpenAI 兼容接口（URL 在回复文本里）
+export VIDEO_BACKEND=chat VIDEO_API_BASE=… VIDEO_API_KEY=… VIDEO_MODEL=…
+
+# 后端二：任务型网关（提交任务后轮询）
+export VIDEO_BACKEND=task VIDEO_API_BASE=… VIDEO_API_KEY=… VIDEO_MODEL=…
+
+# 后端三：结构化网关（Key 鉴权 + 导演参数枚举：运镜/镜头/光圈/调色板）
+export VIDEO_BACKEND=structured VIDEO_API_BASE=… VIDEO_GW_ID=… VIDEO_GW_SECRET=… VIDEO_GW_ENDPOINT=…
+
+# 后端四：自定义命令（占位符 {prompt} {out} {ratio} {duration}）
+export VIDEO_BACKEND=command VIDEO_CMD='你的封装脚本 {prompt} {out}'
+```
+
+- `VIDEO_DRY_RUN` 默认 `1`；设 `0`（或 `video_render.py --live`）才真出片
+- 出片：`python3 $SD/video_render.py storyboard/<slug>/storyboard.json`，质检：`video_qa.py`（七维打分，repair 判决给「局部修改」建议）
+- 提示词里的运镜词条会被自动映射成结构化枚举（对照表见 [`references/camera-vocab.md`](skills/xiaoma-director/references/camera-vocab.md)），对不上的交给端点自动导演
 
 ## 用法
 
